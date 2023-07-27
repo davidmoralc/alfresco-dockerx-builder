@@ -21,6 +21,7 @@ done
 HOME_FOLDER=$PWD
 
 # Configuration
+DOCKER_OUTPUT_REGISTRY=foundry.sps.copyright.com
 REPOSITORY=alfresco
 NEXUS_USER=
 NEXUS_PASS=
@@ -67,7 +68,7 @@ function build {
     cd repo
     $CONTAINER_BUILD_CMD \
     --build-arg ALFRESCO_VERSION=$REPO_COM_VERSION \
-    -t $REPOSITORY/alfresco-content-repository-community:$REPO_COM_VERSION
+    -t $REPOSITORY/base-alfresco-content-repository-community:$REPO_COM_VERSION-arm64
     cd $HOME_FOLDER
   fi
 
@@ -76,7 +77,7 @@ function build {
     cd repo-ent
     $CONTAINER_BUILD_CMD \
     --build-arg ALFRESCO_VERSION=$REPO_ENT_VERSION \
-    -t quay.io/$REPOSITORY/alfresco-content-repository:$REPO_ENT_VERSION
+    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-content-repository:$REPO_ENT_VERSION-arm64
     cd $HOME_FOLDER
   fi
 
@@ -85,7 +86,7 @@ function build {
     cd ags
     $CONTAINER_BUILD_CMD \
     --build-arg AGS_VERSION=$AGS_VERSION \
-    -t $REPOSITORY/alfresco-governance-repository-community:$AGS_VERSION
+    -t $REPOSITORY/base-alfresco-governance-repository-community:$AGS_VERSION-arm64
     cd $HOME_FOLDER
   fi
 
@@ -94,7 +95,7 @@ function build {
     cd ags-ent
     $CONTAINER_BUILD_CMD \
     --build-arg AGS_ENT_VERSION=$AGS_ENT_VERSION \
-    -t quay.io/$REPOSITORY/alfresco-governance-repository-enterprise:$AGS_ENT_VERSION
+    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-governance-repository-enterprise:$AGS_ENT_VERSION-arm64
     cd $HOME_FOLDER
   fi
 
@@ -102,7 +103,7 @@ function build {
   if [ "$SHARE" == "true" ]; then
 
     rm -rf acs-community-packaging
-    git clone git@github.com:Alfresco/acs-community-packaging.git
+    git clone https://github.com/Alfresco/acs-community-packaging.git
     cd acs-community-packaging
     git checkout $SHARE_VERSION || { echo -e >&2 "Available tags:\n$(git tag -l "${SHARE_VERSION:0:5}*")"; exit 1; }
     SHARE_COM_VERSION=$(ggrep -oP '(?<=<dependency.alfresco-community-share.version>).*?(?=</dependency.alfresco-community-share.version>)' pom.xml)
@@ -111,7 +112,7 @@ function build {
     cd share
     $CONTAINER_BUILD_CMD \
     --build-arg SHARE_INTERNAL_VERSION=$SHARE_COM_VERSION \
-    -t $REPOSITORY/alfresco-share:$SHARE_VERSION
+    -t $REPOSITORY/base-alfresco-share:$SHARE_VERSION-arm64
     cd $HOME_FOLDER
   fi
 
@@ -119,7 +120,7 @@ function build {
   if [ "$SHARE_ENT" == "true" ]; then
 
     rm -rf acs-packaging
-    git clone git@github.com:Alfresco/acs-packaging.git
+    git clone https://github.com/Alfresco/acs-packaging.git
     cd acs-packaging
     git checkout $SHARE_VERSION || { echo -e >&2 "Available tags:\n$(git tag -l "${SHARE_VERSION:0:5}*")"; exit 1; }
     SHARE_ENT_VERSION=$(ggrep -oP '(?<=<dependency.alfresco-enterprise-share.version>).*?(?=</dependency.alfresco-enterprise-share.version>)' pom.xml)
@@ -128,7 +129,7 @@ function build {
     cd share
     $CONTAINER_BUILD_CMD \
     --build-arg SHARE_INTERNAL_VERSION=$SHARE_ENT_VERSION \
-    -t quay.io/$REPOSITORY/alfresco-share:$SHARE_VERSION
+    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-share:$SHARE_VERSION-arm64
     cd $HOME_FOLDER
   fi
 
@@ -137,7 +138,7 @@ function build {
     cd ags-share
     $CONTAINER_BUILD_CMD  \
     --build-arg AGS_SHARE_VERSION=$AGS_SHARE_VERSION \
-    -t $REPOSITORY/alfresco-governance-share-community:$AGS_SHARE_VERSION
+    -t $REPOSITORY/base-alfresco-governance-share-community:$AGS_SHARE_VERSION-arm64
     cd $HOME_FOLDER  
   fi
   
@@ -146,7 +147,7 @@ function build {
     cd ags-share-ent
     $CONTAINER_BUILD_CMD  \
     --build-arg AGS_SHARE_ENT_VERSION=$AGS_SHARE_ENT_VERSION \
-    -t quay.io/$REPOSITORY/alfresco-governance-share-enterprise:$AGS_SHARE_ENT_VERSION
+    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-governance-share-enterprise:$AGS_SHARE_ENT_VERSION-arm64
     cd $HOME_FOLDER  
   fi
 
@@ -156,7 +157,7 @@ function build {
     $CONTAINER_BUILD_CMD \
     --build-arg SEARCH_VERSION=$SEARCH_VERSION \
     --build-arg DIST_DIR=/opt/alfresco-search-services \
-    -t $REPOSITORY/alfresco-search-services:$SEARCH_VERSION    
+    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-search-services:$SEARCH_VERSION-arm64
     cd $HOME_FOLDER
   fi
 
@@ -168,14 +169,29 @@ function build {
     --build-arg NEXUS_USER=$NEXUS_USER \
     --build-arg NEXUS_PASS=$NEXUS_PASS \
     --build-arg DIST_DIR=/opt/alfresco-insight-engine \
-    -t quay.io/$REPOSITORY/alfresco-insight-engine:$SEARCH_ENT_VERSION
+    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-insight-engine:$SEARCH_ENT_VERSION-arm64
     cd $HOME_FOLDER
   fi
 
   # Transform Service
   if [ "$TRANSFORM" == "true" ]; then
 
-    wget https://raw.githubusercontent.com/Alfresco/alfresco-transform-core/$TRANSFORM_VERSION/engines/aio/src/main/resources/application-default.yaml
+# Changes to uncomment when ATS version is higher or equal to 3
+#    wget https://raw.githubusercontent.com/Alfresco/alfresco-transform-core/$TRANSFORM_VERSION/engines/aio/src/main/resources/application-default.yaml
+#    IMAGEMAGICK_HOME_FOLDER=$(ggrep -oP '(?<=path: \$\{LIBREOFFICE_HOME:).*?(?=\})' application-default.yaml)
+#    LIBREOFFICE_HOME_FOLDER=$(ggrep -oP '(?<=root: \$\{IMAGEMAGICK_ROOT:).*?(?=\})' application-default.yaml)
+#    rm application-default.yaml
+#
+#    cd transform
+#    $CONTAINER_BUILD_CMD \
+#    --build-arg TRANSFORM_VERSION=$TRANSFORM_VERSION \
+#    --build-arg IMAGEMAGICK_HOME_FOLDER=$IMAGEMAGICK_HOME_FOLDER \
+#    --build-arg LIBREOFFICE_HOME_FOLDER=$LIBREOFFICE_HOME_FOLDER \
+#    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-transform-core-aio:$TRANSFORM_VERSION-arm64
+#    cd $HOME_FOLDER
+
+# Changes to uncomment when ATS version is lower to 3
+    wget https://raw.githubusercontent.com/Alfresco/alfresco-transform-core/$TRANSFORM_VERSION/alfresco-transform-core-aio/alfresco-transform-core-aio-boot/src/main/resources/application-default.yaml
     IMAGEMAGICK_HOME_FOLDER=$(ggrep -oP '(?<=path: \$\{LIBREOFFICE_HOME:).*?(?=\})' application-default.yaml)
     LIBREOFFICE_HOME_FOLDER=$(ggrep -oP '(?<=root: \$\{IMAGEMAGICK_ROOT:).*?(?=\})' application-default.yaml)
     rm application-default.yaml
@@ -185,7 +201,7 @@ function build {
     --build-arg TRANSFORM_VERSION=$TRANSFORM_VERSION \
     --build-arg IMAGEMAGICK_HOME_FOLDER=$IMAGEMAGICK_HOME_FOLDER \
     --build-arg LIBREOFFICE_HOME_FOLDER=$LIBREOFFICE_HOME_FOLDER \
-    -t $REPOSITORY/alfresco-transform-core-aio:$TRANSFORM_VERSION
+    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-transform-core-aio:$TRANSFORM_VERSION-arm64
     cd $HOME_FOLDER
 
   fi
@@ -196,7 +212,7 @@ function build {
     cd transform-router
     $CONTAINER_BUILD_CMD \
     --build-arg TRANSFORM_ROUTER_VERSION=$TRANSFORM_ROUTER_VERSION \
-    -t quay.io/$REPOSITORY/alfresco-transform-router:$TRANSFORM_ROUTER_VERSION
+    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-transform-router:$TRANSFORM_ROUTER_VERSION-arm64
     cd $HOME_FOLDER
 
   fi
@@ -206,7 +222,7 @@ function build {
     cd shared-file-store
     $CONTAINER_BUILD_CMD \
     --build-arg SHARED_FILE_STORE_VERSION=$SHARED_FILE_STORE_VERSION \
-    -t quay.io/$REPOSITORY/alfresco-shared-file-store:$SHARED_FILE_STORE_VERSION
+    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-shared-file-store:$SHARED_FILE_STORE_VERSION-arm64
     cd $HOME_FOLDER
   fi    
 
@@ -215,7 +231,7 @@ function build {
     cd aca
     $CONTAINER_BUILD_CMD \
     --build-arg ACA_VERSION=$ACA_VERSION \
-    -t $REPOSITORY/alfresco-content-app:$ACA_VERSION
+    -t $REPOSITORY/base-alfresco-content-app:$ACA_VERSION-arm64
     cd $HOME_FOLDER
   fi
 
@@ -224,7 +240,7 @@ function build {
     cd adw
     $CONTAINER_BUILD_CMD \
     --build-arg ADW_VERSION=$ADW_VERSION \
-    -t quay.io/$REPOSITORY/alfresco-digital-workspace:$ADW_VERSION
+    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-digital-workspace:$ADW_VERSION-arm64
     cd $HOME_FOLDER
   fi  
 
@@ -233,7 +249,7 @@ function build {
     cd aaa
     $CONTAINER_BUILD_CMD \
     --build-arg AAA_VERSION=$AAA_VERSION \
-    -t quay.io/$REPOSITORY/alfresco-admin-app:$AAA_VERSION
+    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-admin-app:$AAA_VERSION-arm64
     cd $HOME_FOLDER
   fi
 
@@ -245,10 +261,10 @@ function build {
     git checkout $PROXY_VERSION
     PREFIX=""
     if [ "$PROXY_ENT" == "true" ]; then
-      PREFIX="quay.io/"
+      PREFIX="$DOCKER_OUTPUT_REGISTRY/"
     fi
     $CONTAINER_BUILD_CMD \
-    -t $PREFIX$REPOSITORY/alfresco-acs-nginx:$PROXY_VERSION
+    -t $PREFIX$REPOSITORY/base-alfresco-acs-nginx:$PROXY_VERSION-arm64
     cd $HOME_FOLDER
   fi
 
@@ -258,7 +274,7 @@ function build {
     cd identity
     $CONTAINER_BUILD_CMD \
     --build-arg IDENTITY_VERSION=$IDENTITY_VERSION \
-    -t $REPOSITORY/alfresco-identity-service:$IDENTITY_VERSION
+    -t $REPOSITORY/base-alfresco-identity-service:$IDENTITY_VERSION-arm64
     cd $HOME_FOLDER
 
   fi    
@@ -269,7 +285,7 @@ function build {
     cd live-indexing
     $CONTAINER_BUILD_CMD \
     --build-arg ESC_VERSION=$ESC_LIVE_INDEXING_VERSION \
-    -t quay.io/$REPOSITORY/alfresco-elasticsearch-live-indexing:$ESC_LIVE_INDEXING_VERSION
+    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-elasticsearch-live-indexing:$ESC_LIVE_INDEXING_VERSION-arm64
     cd $HOME_FOLDER
 
   fi
@@ -280,14 +296,14 @@ function build {
     cd re-indexing
     $CONTAINER_BUILD_CMD \
     --build-arg ESC_VERSION=$ESC_RE_INDEXING_VERSION \
-    -t quay.io/$REPOSITORY/alfresco-elasticsearch-reindexing:$ESC_RE_INDEXING_VERSION
+    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-elasticsearch-reindexing:$ESC_RE_INDEXING_VERSION-arm64
     cd $HOME_FOLDER
 
   fi  
 
   # List Docker Images built (or existing)
   $CMD images "alfresco/*"
-  $CMD images "quay.io/*"
+  $CMD images "$DOCKER_OUTPUT_REGISTRY/*"
 
 }
 
