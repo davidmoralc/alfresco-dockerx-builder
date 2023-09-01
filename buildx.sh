@@ -49,6 +49,7 @@ AGS_SHARE_ENT="false"
 SEARCH="false"
 SEARCH_ENT="false"
 TRANSFORM="false"
+TRANSFORM_OLD="false"
 TRANSFORM_ROUTER="false"
 SHARED_FILE_STORE="false"
 ACA="false"
@@ -68,7 +69,7 @@ function build {
     cd repo
     $CONTAINER_BUILD_CMD \
     --build-arg ALFRESCO_VERSION=$REPO_COM_VERSION \
-    -t $REPOSITORY/base-alfresco-content-repository-community:$REPO_COM_VERSION-arm64
+    -t $REPOSITORY/base-alfresco-content-repository-ce:$REPO_COM_VERSION-arm64
     cd $HOME_FOLDER
   fi
 
@@ -108,7 +109,7 @@ function build {
     git checkout $SHARE_VERSION || { echo -e >&2 "Available tags:\n$(git tag -l "${SHARE_VERSION:0:5}*")"; exit 1; }
     SHARE_COM_VERSION=$(ggrep -oP '(?<=<dependency.alfresco-community-share.version>).*?(?=</dependency.alfresco-community-share.version>)' pom.xml)
     cd ..
-    
+
     cd share
     $CONTAINER_BUILD_CMD \
     --build-arg SHARE_INTERNAL_VERSION=$SHARE_COM_VERSION \
@@ -125,7 +126,7 @@ function build {
     git checkout $SHARE_VERSION || { echo -e >&2 "Available tags:\n$(git tag -l "${SHARE_VERSION:0:5}*")"; exit 1; }
     SHARE_ENT_VERSION=$(ggrep -oP '(?<=<dependency.alfresco-enterprise-share.version>).*?(?=</dependency.alfresco-enterprise-share.version>)' pom.xml)
     cd ..
-    
+
     cd share
     $CONTAINER_BUILD_CMD \
     --build-arg SHARE_INTERNAL_VERSION=$SHARE_ENT_VERSION \
@@ -139,19 +140,19 @@ function build {
     $CONTAINER_BUILD_CMD  \
     --build-arg AGS_SHARE_VERSION=$AGS_SHARE_VERSION \
     -t $REPOSITORY/base-alfresco-governance-share-community:$AGS_SHARE_VERSION-arm64
-    cd $HOME_FOLDER  
+    cd $HOME_FOLDER
   fi
-  
+
   # AGS Enterprise Share
   if [ "$AGS_SHARE_ENT" == "true" ]; then
     cd ags-share-ent
     $CONTAINER_BUILD_CMD  \
     --build-arg AGS_SHARE_ENT_VERSION=$AGS_SHARE_ENT_VERSION \
     -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-governance-share-enterprise:$AGS_SHARE_ENT_VERSION-arm64
-    cd $HOME_FOLDER  
+    cd $HOME_FOLDER
   fi
 
-  # Search Services 
+  # Search Services
   if [ "$SEARCH" == "true" ]; then
     cd search
     $CONTAINER_BUILD_CMD \
@@ -176,22 +177,7 @@ function build {
   # Transform Service
   if [ "$TRANSFORM" == "true" ]; then
 
-# Changes to uncomment when ATS version is higher or equal to 3
-#    wget https://raw.githubusercontent.com/Alfresco/alfresco-transform-core/$TRANSFORM_VERSION/engines/aio/src/main/resources/application-default.yaml
-#    IMAGEMAGICK_HOME_FOLDER=$(ggrep -oP '(?<=path: \$\{LIBREOFFICE_HOME:).*?(?=\})' application-default.yaml)
-#    LIBREOFFICE_HOME_FOLDER=$(ggrep -oP '(?<=root: \$\{IMAGEMAGICK_ROOT:).*?(?=\})' application-default.yaml)
-#    rm application-default.yaml
-#
-#    cd transform
-#    $CONTAINER_BUILD_CMD \
-#    --build-arg TRANSFORM_VERSION=$TRANSFORM_VERSION \
-#    --build-arg IMAGEMAGICK_HOME_FOLDER=$IMAGEMAGICK_HOME_FOLDER \
-#    --build-arg LIBREOFFICE_HOME_FOLDER=$LIBREOFFICE_HOME_FOLDER \
-#    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-transform-core-aio:$TRANSFORM_VERSION-arm64
-#    cd $HOME_FOLDER
-
-# Changes to uncomment when ATS version is lower to 3
-    wget https://raw.githubusercontent.com/Alfresco/alfresco-transform-core/$TRANSFORM_VERSION/alfresco-transform-core-aio/alfresco-transform-core-aio-boot/src/main/resources/application-default.yaml
+    wget https://raw.githubusercontent.com/Alfresco/alfresco-transform-core/$TRANSFORM_VERSION/engines/aio/src/main/resources/application-default.yaml
     IMAGEMAGICK_HOME_FOLDER=$(ggrep -oP '(?<=path: \$\{LIBREOFFICE_HOME:).*?(?=\})' application-default.yaml)
     LIBREOFFICE_HOME_FOLDER=$(ggrep -oP '(?<=root: \$\{IMAGEMAGICK_ROOT:).*?(?=\})' application-default.yaml)
     rm application-default.yaml
@@ -202,6 +188,26 @@ function build {
     --build-arg IMAGEMAGICK_HOME_FOLDER=$IMAGEMAGICK_HOME_FOLDER \
     --build-arg LIBREOFFICE_HOME_FOLDER=$LIBREOFFICE_HOME_FOLDER \
     -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-transform-core-aio:$TRANSFORM_VERSION-arm64
+    cd $HOME_FOLDER
+
+  fi
+
+
+  # Transform Service
+  if [ "$TRANSFORM_OLD" == "true" ]; then
+
+    # Changes ATS version is lower to 3
+    wget https://raw.githubusercontent.com/Alfresco/alfresco-transform-core/$TRANSFORM_OLD_VERSION/alfresco-transform-core-aio/alfresco-transform-core-aio-boot/src/main/resources/application-default.yaml
+    IMAGEMAGICK_HOME_FOLDER=$(ggrep -oP '(?<=path: \$\{LIBREOFFICE_HOME:).*?(?=\})' application-default.yaml)
+    LIBREOFFICE_HOME_FOLDER=$(ggrep -oP '(?<=root: \$\{IMAGEMAGICK_ROOT:).*?(?=\})' application-default.yaml)
+    rm application-default.yaml
+
+    cd transform
+    $CONTAINER_BUILD_CMD \
+    --build-arg TRANSFORM_VERSION=$TRANSFORM_OLD_VERSION \
+    --build-arg IMAGEMAGICK_HOME_FOLDER=$IMAGEMAGICK_HOME_FOLDER \
+    --build-arg LIBREOFFICE_HOME_FOLDER=$LIBREOFFICE_HOME_FOLDER \
+    -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-transform-core-aio:$TRANSFORM_OLD_VERSION-arm64
     cd $HOME_FOLDER
 
   fi
@@ -224,7 +230,7 @@ function build {
     --build-arg SHARED_FILE_STORE_VERSION=$SHARED_FILE_STORE_VERSION \
     -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-shared-file-store:$SHARED_FILE_STORE_VERSION-arm64
     cd $HOME_FOLDER
-  fi    
+  fi
 
   # ACA
   if [ "$ACA" == true ]; then
@@ -242,7 +248,7 @@ function build {
     --build-arg ADW_VERSION=$ADW_VERSION \
     -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-digital-workspace:$ADW_VERSION-arm64
     cd $HOME_FOLDER
-  fi  
+  fi
 
   # AAA
   if [ "$AAA" == true ]; then
@@ -277,7 +283,7 @@ function build {
     -t $REPOSITORY/base-alfresco-identity-service:$IDENTITY_VERSION-arm64
     cd $HOME_FOLDER
 
-  fi    
+  fi
 
   # Elasticsearch Connector
   if [ "$ESC_LIVE_INDEXING" == "true" ]; then
@@ -299,7 +305,7 @@ function build {
     -t $DOCKER_OUTPUT_REGISTRY/$REPOSITORY/base-alfresco-elasticsearch-reindexing:$ESC_RE_INDEXING_VERSION-arm64
     cd $HOME_FOLDER
 
-  fi  
+  fi
 
   # List Docker Images built (or existing)
   $CMD images "alfresco/*"
@@ -352,6 +358,12 @@ do
             TRANSFORM_VERSION=$1
             shift
         ;;
+        transform-old)
+            TRANSFORM_OLD="true"
+            shift
+            TRANSFORM_OLD_VERSION=$1
+            shift
+        ;;
         transform-router-ent)
             TRANSFORM_ROUTER="true"
             shift
@@ -375,7 +387,7 @@ do
             shift
             SHARE_VERSION=$1
             shift
-        ;;        
+        ;;
         ags-share)
             AGS_SHARE="true"
             shift
@@ -411,7 +423,7 @@ do
             shift
             ADW_VERSION=$1
             shift
-        ;;        
+        ;;
         aaa)
             AAA="true"
             shift
@@ -423,7 +435,7 @@ do
             shift
             PROXY_VERSION=$1
             shift
-        ;;        
+        ;;
         proxy-ent)
             PROXY_ENT="true"
             shift
@@ -463,6 +475,7 @@ do
             echo "  adw VERSION"
             echo "  aaa VERSION"
             echo "  transform VERSION"
+            echo "  transform-old VERSION"
             echo "  transform-router-ent VERSION"
             echo "  shared-file-store-ent VERSION"
             echo "  proxy VERSION"
