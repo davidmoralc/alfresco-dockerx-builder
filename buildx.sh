@@ -8,7 +8,7 @@ set -o nounset
 # set -o xtrace
 
 # Check dependencies
-array=( "git" "ggrep" "wget" "mvn" "java" "docker" )
+array=( "git" "grep" "wget" "mvn" "java" "docker" )
 for i in "${array[@]}"
 do
     command -v $i >/dev/null 2>&1 || { 
@@ -107,7 +107,7 @@ function build {
     git clone https://github.com/Alfresco/acs-community-packaging.git
     cd acs-community-packaging
     git checkout $SHARE_VERSION || { echo -e >&2 "Available tags:\n$(git tag -l "${SHARE_VERSION:0:5}*")"; exit 1; }
-    SHARE_COM_VERSION=$(ggrep -oP '(?<=<dependency.alfresco-community-share.version>).*?(?=</dependency.alfresco-community-share.version>)' pom.xml)
+    SHARE_COM_VERSION=$(grep -oP '(?<=<dependency.alfresco-community-share.version>).*?(?=</dependency.alfresco-community-share.version>)' pom.xml)
     cd ..
 
     cd share
@@ -124,7 +124,7 @@ function build {
     git clone https://github.com/Alfresco/acs-packaging.git
     cd acs-packaging
     git checkout $SHARE_VERSION || { echo -e >&2 "Available tags:\n$(git tag -l "${SHARE_VERSION:0:5}*")"; exit 1; }
-    SHARE_ENT_VERSION=$(ggrep -oP '(?<=<dependency.alfresco-enterprise-share.version>).*?(?=</dependency.alfresco-enterprise-share.version>)' pom.xml)
+    SHARE_ENT_VERSION=$(grep -oP '(?<=<dependency.alfresco-enterprise-share.version>).*?(?=</dependency.alfresco-enterprise-share.version>)' pom.xml)
     cd ..
 
     cd share
@@ -178,8 +178,8 @@ function build {
   if [ "$TRANSFORM" == "true" ]; then
 
     wget https://raw.githubusercontent.com/Alfresco/alfresco-transform-core/$TRANSFORM_VERSION/engines/aio/src/main/resources/application-default.yaml
-    IMAGEMAGICK_HOME_FOLDER=$(ggrep -oP '(?<=path: \$\{LIBREOFFICE_HOME:).*?(?=\})' application-default.yaml)
-    LIBREOFFICE_HOME_FOLDER=$(ggrep -oP '(?<=root: \$\{IMAGEMAGICK_ROOT:).*?(?=\})' application-default.yaml)
+    IMAGEMAGICK_HOME_FOLDER=$(grep -oP '(?<=path: \$\{LIBREOFFICE_HOME:).*?(?=\})' application-default.yaml)
+    LIBREOFFICE_HOME_FOLDER=$(grep -oP '(?<=root: \$\{IMAGEMAGICK_ROOT:).*?(?=\})' application-default.yaml)
     rm application-default.yaml
 
     cd transform
@@ -198,8 +198,8 @@ function build {
 
     # Changes ATS version is lower to 3
     wget https://raw.githubusercontent.com/Alfresco/alfresco-transform-core/$TRANSFORM_OLD_VERSION/alfresco-transform-core-aio/alfresco-transform-core-aio-boot/src/main/resources/application-default.yaml
-    IMAGEMAGICK_HOME_FOLDER=$(ggrep -oP '(?<=path: \$\{LIBREOFFICE_HOME:).*?(?=\})' application-default.yaml)
-    LIBREOFFICE_HOME_FOLDER=$(ggrep -oP '(?<=root: \$\{IMAGEMAGICK_ROOT:).*?(?=\})' application-default.yaml)
+    IMAGEMAGICK_HOME_FOLDER=$(grep -oP '(?<=path: \$\{LIBREOFFICE_HOME:).*?(?=\})' application-default.yaml)
+    LIBREOFFICE_HOME_FOLDER=$(grep -oP '(?<=root: \$\{IMAGEMAGICK_ROOT:).*?(?=\})' application-default.yaml)
     rm application-default.yaml
 
     cd transform
