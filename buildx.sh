@@ -8,7 +8,7 @@ set -o nounset
 # set -o xtrace
 
 # Check dependencies
-array=( "git" "grep" "wget" "mvn" "java" "docker" )
+array=( "git" "grep" "wget" "java" "docker" )
 for i in "${array[@]}"
 do
     command -v $i >/dev/null 2>&1 || { 
